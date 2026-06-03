@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Калькулятор наценки на доставку</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Montserrat', sans-serif; background: #f2f2f2; color: #1a1a1a; min-height: 100vh; padding: 32px 16px 64px; }
+  .page { max-width: 880px; margin: 0 auto; background: #fff; border: 1px solid #ddd; padding: 36px 40px 48px; }
+
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+  .logo-block { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 44px; height: 44px; flex-shrink: 0; }
+  .logo-name { font-size: 15px; font-weight: 700; color: #1a1a1a; line-height: 1.4; }
+  .invoice-title { font-size: 36px; font-weight: 700; color: #c0171d; letter-spacing: 1px; }
+  .divider { height: 2px; background: #c0171d; margin-bottom: 22px; }
+
+  /* DENSITY BLOCK */
+  .density-block { border: 2px solid #c0171d; border-radius: 4px; margin-bottom: 16px; }
+  .density-header { background: #c0171d; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .density-body { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .density-cell { padding: 12px 14px; border-right: 1px solid #e8e8e8; }
+  .density-cell:last-child { border-right: none; }
+  .density-label { font-size: 11px; color: #888; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .density-value { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+  .density-value.highlight { color: #c0171d; }
+  .density-sub { font-size: 11px; color: #999; margin-top: 2px; }
+
+  .recommendation { padding: 10px 14px; display: flex; align-items: center; gap: 10px; border-top: 1px solid #e8e8e8; background: #f9f9f9; }
+  .rec-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 3px; white-space: nowrap; }
+  .rec-badge.kg { background: #fff0f0; color: #c0171d; border: 1px solid #c0171d; }
+  .rec-badge.m3 { background: #f0f5ff; color: #1a5ba0; border: 1px solid #1a5ba0; }
+  .rec-text { font-size: 12px; color: #444; }
+  .rec-profit { font-size: 12px; font-weight: 700; color: #1a8040; margin-left: auto; white-space: nowrap; }
+
+  /* CURRENCY */
+  .currency-block { border: 1px solid #ccc; margin-bottom: 16px; }
+  .section-header { background: #1a1a1a; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 8px 14px; }
+  .section-header.red { background: #c0171d; }
+  .section-header.blue { background: #1a5ba0; }
+
+  .field-row { display: flex; align-items: center; border-bottom: 1px solid #e8e8e8; padding: 0 14px; min-height: 42px; gap: 8px; }
+  .field-row:last-child { border-bottom: none; }
+  .field-row label { font-size: 12px; color: #555; flex: 1; }
+  .field-row input[type="number"], .field-row select {
+    width: 130px; border: 1px solid #ddd; border-radius: 3px; padding: 5px 8px;
+    font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600;
+    color: #1a1a1a; text-align: right; outline: none; background: #fff; transition: border-color 0.15s;
+  }
+  .field-row select { text-align: left; cursor: pointer; }
+  .field-row input[type="number"]:focus, .field-row select:focus { border-color: #c0171d; }
+
+  /* INPUTS GRID */
+  .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #ccc; margin-bottom: 16px; }
+
+  /* SLIDER */
+  .slider-field { display: flex; align-items: center; border-bottom: 1px solid #e8e8e8; padding: 8px 14px; gap: 10px; min-height: 44px; flex-wrap: wrap; }
+  .slider-field:last-child { border-bottom: none; }
+  .slider-top { display: flex; align-items: center; width: 100%; gap: 10px; }
+  .slider-field label { font-size: 12px; color: #555; flex: 1; min-width: 80px; }
+  .slider-field input[type="range"] { flex: 1; -webkit-appearance: none; height: 3px; border-radius: 2px; background: #e0e0e0; outline: none; min-width: 60px; }
+  .slider-field input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #c0171d; cursor: pointer; }
+  .slider-val { font-size: 13px; font-weight: 700; color: #c0171d; min-width: 38px; text-align: right; }
+
+  .weight-hint { font-size: 10px; color: #888; width: 100%; padding-left: 2px; margin-top: -2px; }
+  .weight-hint span { display: inline-block; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 3px; padding: 1px 6px; margin-right: 4px; color: #555; }
+  .weight-hint .active-group { background: #fff0f0; border-color: #c0171d; color: #c0171d; font-weight: 600; }
+
+  /* RESULTS TABLE */
+  .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .results-table thead tr { background: #1a1a1a; color: #fff; }
+  .results-table thead th { padding: 9px 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; text-align: right; }
+  .results-table thead th:first-child { text-align: left; }
+  .results-table tbody tr { border-bottom: 1px solid #e8e8e8; }
+  .results-table tbody tr:nth-child(even) { background: #fafafa; }
+  .results-table tbody td { padding: 9px 14px; text-align: right; color: #333; }
+  .results-table tbody td:first-child { text-align: left; color: #555; }
+  .val-client { font-weight: 600; color: #1a1a1a !important; }
+  .val-profit { font-weight: 600; color: #1a8040 !important; }
+  .results-table tfoot tr { background: #c0171d; }
+  .results-table tfoot td { padding: 10px 14px; text-align: right; color: #fff; font-weight: 700; font-size: 14px; }
+  .results-table tfoot td:first-child { text-align: left; }
+
+  /* SUMMARY */
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid #ccc; border-top: none; }
+  .summary-item { padding: 12px 14px; border-right: 1px solid #ccc; }
+  .summary-item:last-child { border-right: none; }
+  .summary-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .summary-value { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .summary-value.red { color: #c0171d; }
+  .summary-value.green { color: #1a8040; }
+  .summary-value.blue { color: #1a5ba0; }
+  .summary-sub { font-size: 10px; color: #999; margin-top: 2px; }
+
+  .footer-stripe { margin-top: 36px; height: 14px; background: linear-gradient(90deg, #c0171d 0%, #8a0f13 55%, #1a1a1a 55%); }
+  .note { margin-top: 14px; font-size: 11px; color: #aaa; text-align: center; }
+
+  @media (max-width: 640px) {
+    .page { padding: 20px 14px 32px; }
+    .inputs-grid { grid-template-columns: 1fr; }
+    .density-body { grid-template-columns: 1fr 1fr; }
+    .density-cell:nth-child(2) { border-right: none; }
+    .density-cell:nth-child(3) { border-top: 1px solid #e8e8e8; }
+    .density-cell:nth-child(4) { border-top: 1px solid #e8e8e8; border-right: none; }
+    .summary { grid-template-columns: 1fr 1fr; }
+    .summary-item:nth-child(2) { border-right: none; }
+    .summary-item:nth-child(3) { border-top: 1px solid #ccc; }
+    .summary-item:nth-child(4) { border-top: 1px solid #ccc; border-right: none; }
+    .invoice-title { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="logo-block">
+      <svg class="logo-icon" viewBox="0 0 44 44" fill="none">
+        <rect x="0" y="0" width="20" height="20" fill="#c0171d"/>
+        <rect x="24" y="0" width="20" height="20" fill="#c0171d"/>
+        <rect x="0" y="24" width="20" height="20" fill="#1a1a1a"/>
+        <rect x="24" y="24" width="20" height="20" fill="#c0171d" opacity="0.5"/>
+      </svg>
+      <div class="logo-name">Калькулятор<br>наценки на доставку</div>
+    </div>
+    <div class="invoice-title">РАСЧЁТ</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- DENSITY BLOCK -->
+  <div class="density-block">
+    <div class="density-header">
+      <span>Автоматический расчёт плотности груза</span>
+      <span style="font-size:10px;font-weight:400;opacity:0.85;">Плотность = Вес ÷ Объём</span>
+    </div>
+    <div class="density-body" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr;">
+      <div class="density-cell">
+        <div class="density-label">Вес груза (кг)</div>
+        <input type="number" id="d-weight" value="1678" step="1" oninput="calcDensity()" style="width:100%;border:1px solid #ddd;border-radius:3px;padding:6px 8px;font-family:'Montserrat',sans-serif;font-size:18px;font-weight:700;color:#1a1a1a;outline:none;margin-top:2px;" />
+      </div>
+      <div class="density-cell">
+        <div class="density-label">Объём груза (м³)</div>
+        <input type="number" id="d-volume" value="4.61" step="0.01" oninput="calcDensity()" style="width:100%;border:1px solid #ddd;border-radius:3px;padding:6px 8px;font-family:'Montserrat',sans-serif;font-size:18px;font-weight:700;color:#1a1a1a;outline:none;margin-top:2px;" />
+      </div>
+      <div class="density-cell">
+        <div class="density-label">Плотность (кг/м³)</div>
+        <div class="density-value highlight" id="density-val">364</div>
+        <div class="density-sub" id="density-sub">плотный груз</div>
+      </div>
+      <div class="density-cell">
+        <div class="density-label">Коэфф. карго</div>
+        <input type="number" id="d-koeff" value="110" step="1" oninput="reCalcM3();" style="width:100%;border:1px solid #ddd;border-radius:3px;padding:4px 8px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:700;color:#1a5ba0;outline:none;margin-top:2px;" />
+        <div class="density-sub">порог расчёта</div>
+      </div>
+      <div class="density-cell">
+        <div class="density-label">Карго берёт MAX из</div>
+        <div class="density-value" id="density-mode-val" style="color:#c0171d;">По кг</div>
+        <div class="density-sub" id="density-mode-sub">выгоднее для карго</div>
+      </div>
+    </div>
+    <div class="recommendation" id="rec-block" style="flex-wrap:wrap;gap:8px 10px;">
+      <span class="rec-badge kg" id="rec-badge">СЧИТАТЬ ПО КГ</span>
+      <span class="rec-text" id="rec-text" style="flex:1;min-width:180px;"></span>
+      <span id="rec-markup-badge" style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:3px;background:#e8f5e9;color:#1a8040;border:1px solid #1a8040;white-space:nowrap;">Рекомендуем: 20%</span>
+      <button id="rec-apply-btn" onclick="applyRecommendedMarkup()" style="font-size:12px;font-weight:600;padding:4px 14px;border-radius:3px;border:1px solid #c0171d;background:#c0171d;color:#fff;cursor:pointer;white-space:nowrap;">Применить 20%</button>
+      <span id="rec-why" style="font-size:11px;color:#888;width:100%;"></span>
+      <div id="max-calc-block" style="width:100%;background:#f0f5ff;border:1px solid #b5d4f4;border-radius:4px;padding:8px 12px;font-size:12px;margin-top:2px;">
+        <span style="font-weight:700;color:#1a5ba0;">Расчёт MAX:</span>
+        <span id="max-kg-val" style="margin-left:8px;">По кг: —</span>
+        <span style="margin:0 8px;color:#ccc;">|</span>
+        <span id="max-m3-val">По м³: —</span>
+        <span style="margin:0 8px;color:#ccc;">|</span>
+        <span style="font-weight:700;color:#c0171d;" id="max-winner">Карго берёт: —</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CURRENCY BLOCK -->
+  <div class="currency-block">
+    <div class="section-header blue">Курс доллара</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;">
+      <div class="field-row" style="border-right:1px solid #e8e8e8;">
+        <label>Курс карго (₽/$)</label>
+        <input type="number" id="rate-cargo-usd" value="80" step="0.5" oninput="syncInsRates(); update()" style="width:90px;" />
+      </div>
+      <div class="field-row" style="border-right:1px solid #e8e8e8;">
+        <label>Ваш курс (₽/$)</label>
+        <input type="number" id="rate-your-usd" value="83" step="0.5" oninput="syncInsRates(); update()" style="width:90px;" />
+      </div>
+      <div class="field-row">
+        <label>Заработок на курсе</label>
+        <span style="font-size:14px;font-weight:700;color:#1a8040;" id="currency-profit-preview">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUTS -->
+  <div class="inputs-grid">
+    <div>
+      <div class="section-header">Данные от карго</div>
+      <div class="field-row">
+        <label>Ставка карго ($/кг)</label>
+        <input type="number" id="rate-kg" value="1.6" step="0.1" oninput="reCalcM3();" />
+      </div>
+      <div class="field-row" style="background:#f9fbff;">
+        <label style="color:#1a5ba0;font-size:11px;">Ставка карго ($/м³)<br><span id="m3-auto-label" style="color:#aaa;font-weight:400;">= $1.6 × 167 = авто</span></label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" id="rate-m3" value="267" step="1" oninput="setM3Manual(); calcDensity();" style="width:80px;" />
+          <button id="m3-reset-btn" onclick="autoCalcM3(true); update();" title="Сбросить к авто" style="font-size:10px;padding:2px 7px;border:1px solid #1a5ba0;border-radius:3px;background:#e6f1fb;color:#1a5ba0;cursor:pointer;white-space:nowrap;display:none;">авто</button>
+        </div>
+      </div>
+      <div class="field-row" style="background:#f9f9f9;">
+        <label id="qty-label" style="color:#888;">Вес (кг) — из блока выше</label>
+        <span id="qty-display" style="font-size:13px;font-weight:700;color:#1a1a1a;">1678</span>
+      </div>
+      <div class="field-row" style="background:#f9f9f9;">
+        <label style="color:#888;">Объём (м³) — из блока выше</label>
+        <span id="vol-display" style="font-size:13px;font-weight:700;color:#1a5ba0;">4.61</span>
+      </div>
+      <div class="field-row">
+        <label>Тип упаковки карго</label>
+        <select id="cargo-pack-type" onchange="syncPackMarkup(); calcPack(); update()" style="width:130px;border:1px solid #ddd;border-radius:3px;padding:5px 8px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;color:#1a1a1a;background:#fff;outline:none;cursor:pointer;">
+          <option value="per_place">За место</option>
+          <option value="per_unit025">За 0.25 м³ (обрешётка)</option>
+          <option value="per_m3">За м³ (паллет)</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <label id="pack-price-label">Упаковка карго — цена ($)</label>
+        <input type="number" id="pack-price" value="4" step="0.5" oninput="calcPack(); update()" style="width:90px;" />
+      </div>
+      <div class="field-row" id="pack-qty-row">
+        <label>Кол-во мест</label>
+        <input type="number" id="pack-qty" value="6" step="1" oninput="calcPack(); update()" style="width:90px;" />
+      </div>
+      <div class="field-row" style="background:#f9f9f9;">
+        <label style="color:#888;">Упаковка карго итого ($)</label>
+        <span id="pack-total-display" style="font-size:13px;font-weight:700;color:#1a1a1a;">$24</span>
+      </div>
+      <div class="field-row">
+        <label>Стоимость товара ($)</label>
+        <input type="number" id="goods-value" value="6000" step="100" oninput="calcIns(); update()" />
+      </div>
+      <div class="field-row" style="background:#f9f9f9;">
+        <label style="color:#888;">Страховка (1% от товара)</label>
+        <span id="ins-display" style="font-size:13px;font-weight:700;color:#1a1a1a;">$60</span>
+      </div>
+      <div class="field-row">
+        <label>Выдача со склада ($)</label>
+        <input type="number" id="warehouse" value="28" step="1" oninput="update()" />
+      </div>
+    </div>
+
+    <div>
+      <div class="section-header red">Ваши накрутки</div>
+
+      <div class="slider-field">
+        <div class="slider-top">
+          <label id="d-lbl">Вес</label>
+          <input type="range" id="dm" min="0" max="50" value="20" step="1" oninput="update()" />
+          <span class="slider-val" id="dm-out">20%</span>
+        </div>
+        <div class="weight-hint" id="weight-hint">
+          <span id="wg1">50–100 кг → 25%</span>
+          <span id="wg2">100–500 кг → 20%</span>
+          <span id="wg3">500–1000 кг → 15%</span>
+        </div>
+      </div>
+
+      <div class="field-row" style="border-bottom:1px solid #e8e8e8;">
+        <label style="font-size:12px;color:#555;">Курс карго (₽/$) страховка</label>
+        <input type="number" id="ins-rate-cargo" value="73" step="0.5" oninput="update()" style="width:90px;" />
+      </div>
+      <div class="field-row" style="border-bottom:1px solid #e8e8e8;">
+        <label style="font-size:12px;color:#555;">Ваш курс (₽/$) страховка</label>
+        <input type="number" id="ins-rate-our" value="76" step="0.5" oninput="update()" style="width:90px;" />
+      </div>
+
+      <div class="slider-field">
+        <div class="slider-top">
+          <label>Выдача со склада</label>
+          <input type="range" id="wm" min="0" max="100" value="0" step="1" oninput="update()" />
+          <span class="slider-val" id="wm-out">0%</span>
+        </div>
+      </div>
+
+      <div style="background:#fffbf0;border-top:1px solid #e8e8e8;padding:8px 14px;">
+        <div style="margin-bottom:6px;">
+          <span style="color:#7a5c00;font-size:11px;font-weight:600;">Ваша наценка за упаковку</span>
+        </div>
+        <select id="pack-markup-select" onchange="update()" style="width:100%;border:1px solid #f0d070;border-radius:3px;padding:5px 8px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;color:#7a5c00;background:#fffbf0;outline:none;cursor:pointer;">
+          <option value="0" data-type="none"       data-price="0"  data-cargo="0">— без наценки</option>
+          <option value="1" data-type="per_place"  data-price="5"  data-cargo="4">Мешок + скотч ($4→$5/место)</option>
+          <option value="2" data-type="per_place" data-price="7"  data-cargo="5">Уголки ($5→$7/место)</option>
+          <option value="3" data-type="per_unit025" data-price="7" data-cargo="5">Обрешётка ($5→$7 за 0.25 м³)</option>
+          <option value="4" data-type="per_m3"     data-price="30" data-cargo="20">Паллет ($20→$30/м³)</option>
+        </select>
+      </div>
+      <div class="field-row" style="background:#f5fff5;">
+        <label style="color:#1a8040;font-size:11px;">Ваша упаковка итого ($)</label>
+        <span id="pack-our-display" style="font-size:13px;font-weight:700;color:#1a8040;">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE TOGGLE (manual override) -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <span style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Ручное переключение:</span>
+    <div style="display:flex;border:1.5px solid #c0171d;border-radius:4px;overflow:hidden;">
+      <button class="mode-btn active" id="btn-kg" onclick="setMode('kg')" style="padding:6px 18px;border:none;background:#c0171d;color:#fff;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;cursor:pointer;">По кг</button>
+      <button class="mode-btn" id="btn-m3" onclick="setMode('m3')" style="padding:6px 18px;border:none;background:#fff;color:#c0171d;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border-left:1.5px solid #c0171d;">По м³</button>
+    </div>
+    <span style="font-size:11px;color:#aaa;">← переключится автоматически после расчёта плотности</span>
+  </div>
+
+  <!-- RESULTS TABLE -->
+  <table class="results-table">
+    <thead>
+      <tr>
+        <th>Наименование услуги</th>
+        <th>Карго ($)</th>
+        <th>Клиент ($)</th>
+        <th>Заработок ($)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td id="row-d-name">Доставка</td>
+        <td id="row-d-cargo">—</td>
+        <td class="val-client" id="row-d-client">—</td>
+        <td class="val-profit" id="row-d-profit">—</td>
+      </tr>
+      <tr>
+        <td id="row-p-name">Упаковка</td>
+        <td id="row-p-cargo">—</td>
+        <td class="val-client" id="row-p-client">—</td>
+        <td class="val-profit" id="row-p-profit">—</td>
+      </tr>
+      <tr id="row-obr-detail" style="display:none;background:#fffbf0;">
+        <td style="font-size:11px;color:#7a5c00;padding-left:28px;" id="row-obr-text">↳ блоков по 0.25 м³</td>
+        <td id="row-obr-cargo">—</td>
+        <td class="val-client" id="row-obr-client">—</td>
+        <td class="val-profit" id="row-obr-diff">—</td>
+      </tr>
+      <tr>
+        <td id="row-i-name">Страховка ($" + ins + ", курс ₽" + insRateCargo + "→₽" + insRateOur + ")</td>
+        <td id="row-i-cargo">—</td>
+        <td class="val-client" id="row-i-client">—</td>
+        <td class="val-profit" id="row-i-profit">—</td>
+      </tr>
+      <tr>
+        <td>Выдача со склада</td>
+        <td id="row-w-cargo">—</td>
+        <td class="val-client" id="row-w-client">—</td>
+        <td class="val-profit" id="row-w-profit">—</td>
+      </tr>
+      <tr style="background:#f0f7ff !important;">
+        <td style="color:#1a5ba0;font-weight:600;">Заработок на курсе доллара</td>
+        <td>—</td>
+        <td class="val-client" id="row-cur-client">—</td>
+        <td class="val-profit" id="row-cur-profit">—</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>Итого к оплате</td>
+        <td id="row-total-cargo">—</td>
+        <td id="row-total-client">—</td>
+        <td id="row-total-profit">—</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="summary">
+    <div class="summary-item">
+      <div class="summary-label">Карго выставило вам</div>
+      <div class="summary-value red" id="s-cargo">—</div>
+      <div class="summary-sub">в долларах</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Выставляете клиенту</div>
+      <div class="summary-value" id="s-client">—</div>
+      <div class="summary-sub">по вашему прайсу</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Заработок на услугах</div>
+      <div class="summary-value green" id="s-profit">—</div>
+      <div class="summary-sub" id="s-margin">маржа —%</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Заработок на курсе</div>
+      <div class="summary-value blue" id="s-currency">—</div>
+      <div class="summary-sub">разница курсов ₽</div>
+    </div>
+  </div>
+
+  <div class="footer-stripe"></div>
+  <div class="note">Калькулятор наценки на доставку · Внутренний инструмент</div>
+
+</div>
+
+<script>
+  let mode = 'kg';
+
+  let recommendedMarkup = 20;
+
+  function getRecommendedMarkup(isKg, weight) {
+    if (!isKg) return { pct: 17, why: 'Лёгкий груз (по м³): стандартная наценка 15–20%, берём середину 17%' };
+    if (weight < 100)  return { pct: 25, why: '50–100 кг: маленький груз, клиент не торгуется — берём 25%' };
+    if (weight < 500)  return { pct: 20, why: '100–500 кг: основной поток, середина рынка — берём 20%' };
+    return               { pct: 15, why: '500–1000 кг: крупный груз, заработаем на объёме — берём 15%' };
+  }
+
+  function applyRecommendedMarkup() {
+    document.getElementById('dm').value = recommendedMarkup;
+    document.getElementById('dm-out').textContent = recommendedMarkup + '%';
+    update();
+  }
+
+  function calcDensity() {
+    const w = parseFloat(document.getElementById('d-weight').value) || 0;
+    const v = parseFloat(document.getElementById('d-volume').value) || 0;
+    if (!w || !v) return;
+
+    const koeff = parseFloat(document.getElementById('d-koeff').value) || 110;
+    const density = w / v;
+    document.getElementById('density-val').textContent = Math.round(density);
+    document.getElementById('vol-display').textContent = v;
+
+    // MAX logic: cargo picks based on density vs koeff threshold
+    const rateKg  = parseFloat(document.getElementById('rate-kg').value) || 0;
+    const rateM3v = parseFloat(document.getElementById('rate-m3').value) || 0;
+    const byKg = rateKg * w;
+    const byM3 = rateM3v * v;
+    const isKg = density >= koeff;
+
+    // Show MAX calc block
+    document.getElementById('max-kg-val').textContent  = 'По кг: $' + rateKg + ' × ' + w + ' = $' + byKg.toFixed(2);
+    document.getElementById('max-m3-val').textContent  = 'По м³: $' + rateM3v + ' × ' + v + ' = $' + byM3.toFixed(2);
+    document.getElementById('max-winner').textContent  = 'Карго берёт: ' + (isKg ? 'по кг ($' + byKg.toFixed(2) + ')' : 'по м³ ($' + byM3.toFixed(2) + ')');
+
+    const badge   = document.getElementById('rec-badge');
+    const modeVal = document.getElementById('density-mode-val');
+
+    const rec = getRecommendedMarkup(isKg, w);
+    recommendedMarkup = rec.pct;
+
+    document.getElementById('rec-markup-badge').textContent = 'Рекомендуем: ' + rec.pct + '%';
+    document.getElementById('rec-why').textContent = rec.why;
+    document.getElementById('rec-apply-btn').textContent = 'Применить ' + rec.pct + '%';
+
+    if (isKg) {
+      document.getElementById('density-sub').textContent = 'плотный груз';
+      modeVal.textContent = 'По кг';
+      modeVal.style.color = '#c0171d';
+      document.getElementById('density-mode-sub').textContent = 'MAX = кг × ставка';
+      badge.textContent = 'КАРГО СЧИТАЕТ ПО КГ';
+      badge.className = 'rec-badge kg';
+      document.getElementById('rec-text').textContent =
+        'Плотность ' + Math.round(density) + ' кг/м³ ≥ коэфф. ' + koeff + ' — плотный груз, карго берёт по кг.';
+    } else {
+      document.getElementById('density-sub').textContent = 'лёгкий груз';
+      modeVal.textContent = 'По м³';
+      modeVal.style.color = '#1a5ba0';
+      document.getElementById('density-mode-sub').textContent = 'MAX = м³ × ставка';
+      badge.textContent = 'КАРГО СЧИТАЕТ ПО М³';
+      badge.className = 'rec-badge m3';
+      document.getElementById('rec-text').textContent =
+        'Плотность ' + Math.round(density) + ' кг/м³ < коэфф. ' + koeff + ' — лёгкий груз, карго берёт по м³.';
+    }
+
+    setModeAuto(isKg ? 'kg' : 'm3', w, v);
+    update();
+  }
+
+  function getQty() {
+    const w = parseFloat(document.getElementById('d-weight').value) || 0;
+    const v = parseFloat(document.getElementById('d-volume').value) || 0;
+    return mode === 'kg' ? w : v;
+  }
+
+  function setModeAuto(m, w, v) {
+    mode = m;
+    document.getElementById('btn-kg').style.background = m === 'kg' ? '#c0171d' : '#fff';
+    document.getElementById('btn-kg').style.color      = m === 'kg' ? '#fff' : '#c0171d';
+    document.getElementById('btn-m3').style.background = m === 'm3' ? '#c0171d' : '#fff';
+    document.getElementById('btn-m3').style.color      = m === 'm3' ? '#fff' : '#c0171d';
+
+    if (m === 'kg') {
+      document.getElementById('qty-display').textContent = w;
+      document.getElementById('qty-label').textContent  = 'Вес (кг) — из блока выше';
+      document.getElementById('weight-hint').style.display = '';
+    } else {
+      document.getElementById('qty-display').textContent = v;
+      document.getElementById('qty-label').textContent  = 'Объём (м³) — из блока выше';
+      document.getElementById('weight-hint').style.display = 'none';
+    }
+  }
+
+  function setMode(m) {
+    const w = parseFloat(document.getElementById('d-weight').value) || 0;
+    const v = parseFloat(document.getElementById('d-volume').value) || 0;
+    setModeAuto(m, w, v);
+    update();
+  }
+
+  let m3Manual = false;
+
+  function autoCalcM3(force) {
+    if (!force && m3Manual) return;
+    m3Manual = false;
+    const rkg  = parseFloat(document.getElementById('rate-kg').value) || 0;
+    const w    = parseFloat(document.getElementById('d-weight').value) || 0;
+    const v    = parseFloat(document.getElementById('d-volume').value) || 0;
+    if (!v) return;
+    // Реальная ставка м³ = (ставка кг × вес) ÷ объём
+    const auto = Math.round(rkg * w / v * 10) / 10;
+    document.getElementById('rate-m3').value = auto;
+    document.getElementById('rate-m3').style.color = '#1a5ba0';
+    document.getElementById('m3-auto-label').textContent = '= ($' + rkg.toFixed(2) + ' × ' + w + 'кг) ÷ ' + v + 'м³ = $' + auto + '/м³ (авто)';
+    document.getElementById('m3-reset-btn').style.display = 'none';
+  }
+
+  function reCalcM3() {
+    autoCalcM3(true);
+    calcDensity();
+  }
+
+  function setM3Manual() {
+    m3Manual = true;
+    document.getElementById('rate-m3').style.color = '#1a1a1a';
+    document.getElementById('m3-auto-label').textContent = 'введено вручную';
+    document.getElementById('m3-reset-btn').style.display = 'inline-block';
+  }
+
+  function syncInsRates() {
+    const cargo = document.getElementById('rate-cargo-usd').value;
+    const our   = document.getElementById('rate-your-usd').value;
+    document.getElementById('ins-rate-cargo').value = cargo;
+    document.getElementById('ins-rate-our').value   = our;
+  }
+
+  function calcIns() {
+    const gv  = parseFloat(document.getElementById('goods-value').value) || 0;
+    const ins = Math.round(gv * 0.01 * 100) / 100;
+    document.getElementById('ins-display').textContent = '$' + ins.toFixed(2);
+  }
+
+  // Дефолтные цены карго по типу упаковки
+  const cargoPackDefaults = { per_place: 4, per_unit025: 5, per_m3: 20 };
+
+  // При смене типа упаковки карго — подставляем цену и авто-выбираем наценку
+  function syncPackMarkup() {
+    const cargoType = document.getElementById('cargo-pack-type').value;
+    // Подставляем цену карго по умолчанию
+    const defaultPrice = cargoPackDefaults[cargoType];
+    if (defaultPrice !== undefined) {
+      document.getElementById('pack-price').value = defaultPrice;
+    }
+    // Авто-выбираем нашу наценку
+    const sel = document.getElementById('pack-markup-select');
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].getAttribute('data-type') === cargoType) {
+        sel.selectedIndex = i;
+        break;
+      }
+    }
+  }
+
+  function calcPack() {
+    const price    = parseFloat(document.getElementById('pack-price').value) || 0;
+    const qty      = parseFloat(document.getElementById('pack-qty').value) || 0;
+    const volume   = parseFloat(document.getElementById('d-volume').value) || 0;
+    const cargoType = document.getElementById('cargo-pack-type').value;
+    const priceLabel = document.getElementById('pack-price-label');
+    const qtyRow     = document.getElementById('pack-qty-row');
+    let total = 0;
+    if (cargoType === 'per_place') {
+      priceLabel.textContent = 'Упаковка карго — цена за место ($)';
+      qtyRow.style.display = '';
+      total = price * qty;
+      document.getElementById('pack-total-display').textContent = '$' + total.toFixed(0) + ' (' + qty + ' мест \xd7 $' + price + ')';
+    } else if (cargoType === 'per_unit025') {
+      priceLabel.textContent = 'Упаковка карго — цена за 0.25 \u043c\u00b3 ($)';
+      qtyRow.style.display = 'none';
+      const blocks = Math.ceil(volume / 0.25);
+      total = price * blocks;
+      document.getElementById('pack-total-display').textContent = '$' + total.toFixed(0) + ' (' + blocks + ' \u0431\u043b\u043e\u043a\u043e\u0432 \xd7 $' + price + ')';
+    } else if (cargoType === 'per_m3') {
+      priceLabel.textContent = 'Упаковка карго — цена за м\u00b3 ($)';
+      qtyRow.style.display = 'none';
+      total = price * volume;
+      document.getElementById('pack-total-display').textContent = '$' + total.toFixed(0) + ' (' + volume + ' \u043c\u00b3 \xd7 $' + price + ')';
+    }
+    return total;
+  }
+
+  function fmt(n)    { return '$' + Math.round(n).toLocaleString('ru-RU'); }
+  function fmtR(n)   { return '$' + n.toFixed(2); }
+  function fmtRub(n) { return Math.round(n).toLocaleString('ru-RU') + ' ₽'; }
+
+  function update() {
+    const dm = +document.getElementById('dm').value;
+    const wm = +document.getElementById('wm').value;
+
+    document.getElementById('dm-out').textContent = dm + '%';
+    document.getElementById('wm-out').textContent = wm + '%';
+
+    const qty = getQty();
+
+    if (mode === 'kg') {
+      const g1 = document.getElementById('wg1');
+      const g2 = document.getElementById('wg2');
+      const g3 = document.getElementById('wg3');
+      g1.className = (qty >= 50  && qty < 100)   ? 'active-group' : '';
+      g2.className = (qty >= 100 && qty < 500)   ? 'active-group' : '';
+      g3.className = (qty >= 500 && qty <= 1000) ? 'active-group' : '';
+    }
+
+    const packPricePerPlace = parseFloat(document.getElementById('pack-price').value) || 0;
+    const packPlaces        = parseFloat(document.getElementById('pack-qty').value) || 0;
+    const volume            = parseFloat(document.getElementById('d-volume').value) || 0;
+    // Считаем, что карго выставляет нам в зависимости от выбранного типа упаковки карго
+    const cargoPackType = document.getElementById('cargo-pack-type').value;
+    let pack = 0;
+    if (cargoPackType === 'per_place') {
+      pack = packPricePerPlace * packPlaces;
+    } else if (cargoPackType === 'per_unit025') {
+      pack = packPricePerPlace * Math.ceil(volume / 0.25);
+    } else if (cargoPackType === 'per_m3') {
+      pack = packPricePerPlace * volume;
+    }
+    // Авто-подсказка: если тип упаковки карго совпадает с нашей наценкой — подсветить
+    const packSel           = document.getElementById('pack-markup-select');
+    const packOpt           = packSel.options[packSel.selectedIndex];
+    const packOurPrice      = parseFloat(packOpt.getAttribute('data-price')) || 0;
+    const packCargoUnit     = parseFloat(packOpt.getAttribute('data-cargo')) || 0;
+    const packOurType       = packOpt.getAttribute('data-type');
+
+    // Логика расчёта нашей упаковки:
+    // per_place   — $5 × кол-во мест
+    // per_unit025 — $7 × кол-во единиц (каждая до 0.25 м³, кол-во = ceil(объём / 0.25))
+    // per_m3      — $30 × объём м³
+    let packMarkup = 0;
+    let packUnits  = packPlaces;
+    let obrBlocks = 0, obrCargoSum = 0, obrOurSum = 0;
+    if (packOurType === 'per_place') {
+      packUnits  = packPlaces;
+      packMarkup = packOurPrice * packPlaces;
+    } else if (packOurType === 'per_unit025') {
+      obrBlocks  = Math.ceil(volume / 0.25);
+      obrCargoSum = packCargoUnit * obrBlocks;
+      obrOurSum   = packOurPrice  * obrBlocks;
+      packUnits  = obrBlocks;
+      packMarkup = obrOurSum;
+    } else if (packOurType === 'per_m3') {
+      packUnits  = volume;
+      packMarkup = packOurPrice * volume;
+    }
+    const rate           = mode === 'kg' ? (parseFloat(document.getElementById('rate-kg').value) || 0) : (parseFloat(document.getElementById('rate-m3').value) || 0);
+    const goodsValue     = parseFloat(document.getElementById('goods-value').value) || 0;
+    const ins            = Math.round(goodsValue * 0.01 * 100) / 100;
+    const wh             = parseFloat(document.getElementById('warehouse').value) || 0;
+    const rateCargo      = parseFloat(document.getElementById('rate-cargo-usd').value) || 80;
+    const rateYour       = parseFloat(document.getElementById('rate-your-usd').value) || 83;
+
+    const cargoDel    = rate * qty;
+    const clientRateExact = rate * (1 + dm / 100);
+    const clientRate  = Math.round(clientRateExact * 10) / 10; // округляем до десятых
+    const clientDel   = clientRate * qty;                       // считаем от округлённой
+    const clientPack  = packMarkup > 0 ? packMarkup : pack;
+    const insRateCargo = parseFloat(document.getElementById('ins-rate-cargo').value) || 1;
+    const insRateOur   = parseFloat(document.getElementById('ins-rate-our').value) || 1;
+    // Страховка в $: карго считает по своему курсу, клиент платит по нашему
+    // Сумма в $ для клиента = ins * (наш курс / курс карго) — получается больше
+    const clientIns    = Math.round(ins * insRateOur / insRateCargo * 100) / 100;
+    const insProfit    = clientIns - ins; // заработок в $
+    const clientWh    = wh  * (1 + wm / 100);
+
+    const cargoTotal     = cargoDel + pack + ins + wh;
+    const clientTotalUsd = clientDel + clientPack + clientIns + clientWh;
+    const profitUsd      = clientTotalUsd - cargoTotal;
+    const margin         = cargoTotal > 0 ? (profitUsd / cargoTotal * 100) : 0;
+    const currencyProfit = cargoTotal * (rateYour - rateCargo);
+
+    document.getElementById('currency-profit-preview').textContent = '+' + fmtRub(currencyProfit);
+
+    const unit = mode === 'kg' ? 'кг' : 'м³';
+    document.getElementById('row-d-name').textContent   = 'Доставка ($' + clientRate.toFixed(1) + '/' + unit + ')';
+    document.getElementById('row-d-cargo').textContent  = fmt(cargoDel);
+    document.getElementById('row-d-client').textContent = fmt(clientDel);
+    document.getElementById('row-d-profit').textContent = '+' + fmt(clientDel - cargoDel);
+
+    let packName, packOurStr;
+    const obrDetailRow = document.getElementById('row-obr-detail');
+    if (packOurType === 'per_place') {
+      packName   = 'Упаковка ($' + packOurPrice + '/место × ' + packPlaces + ' мест)';
+      packOurStr = '$' + clientPack.toFixed(0) + ' (' + packPlaces + ' × $' + packOurPrice + ')';
+      if (obrDetailRow) obrDetailRow.style.display = 'none';
+    } else if (packOurType === 'per_unit025') {
+      packName   = 'Обрешётка (объём ' + volume + ' м³)';
+      packOurStr = '$' + clientPack.toFixed(0) + ' (' + obrBlocks + ' блоков × $' + packOurPrice + ')';
+      if (obrDetailRow) obrDetailRow.style.display = '';
+      document.getElementById('row-obr-text').textContent =
+        '↳ ' + obrBlocks + ' блоков по 0.25 м³: карго $' + packCargoUnit + '/блок, вы $' + packOurPrice + '/блок';
+      document.getElementById('row-obr-cargo').textContent  = '$' + obrCargoSum.toFixed(0);
+      document.getElementById('row-obr-client').textContent = '$' + obrOurSum.toFixed(0);
+      document.getElementById('row-obr-diff').textContent   = '+$' + (obrOurSum - obrCargoSum).toFixed(0);
+    } else if (packOurType === 'per_m3') {
+      packName   = 'Паллет ($' + packOurPrice + '/м³ × ' + volume + ' м³)';
+      packOurStr = '$' + clientPack.toFixed(0) + ' (' + volume + ' м³ × $' + packOurPrice + ')';
+      if (obrDetailRow) obrDetailRow.style.display = 'none';
+    } else {
+      packName   = 'Упаковка (' + packPlaces + ' мест)';
+      packOurStr = fmt(pack);
+      if (obrDetailRow) obrDetailRow.style.display = 'none';
+    }
+    document.getElementById('row-p-name').textContent   = packName;
+    document.getElementById('row-p-cargo').textContent  = fmt(pack);
+    document.getElementById('row-p-client').textContent = fmt(clientPack);
+    document.getElementById('row-p-profit').textContent = '+' + fmt(clientPack - pack);
+    document.getElementById('pack-our-display').textContent = packOurStr;
+
+    document.getElementById('row-i-name').textContent   = 'Страховка 1% от $' + goodsValue + ' (₽' + insRateCargo + '→₽' + insRateOur + ')';
+    document.getElementById('row-i-cargo').textContent  = '$' + ins.toFixed(2);
+    document.getElementById('row-i-client').textContent = '$' + clientIns.toFixed(2);
+    document.getElementById('row-i-profit').textContent = '+$' + insProfit.toFixed(2);
+
+    document.getElementById('row-w-cargo').textContent  = fmt(wh);
+    document.getElementById('row-w-client').textContent = fmt(clientWh);
+    document.getElementById('row-w-profit').textContent = '+' + fmt(clientWh - wh);
+
+    document.getElementById('row-cur-client').textContent = fmtRub(clientTotalUsd * rateYour);
+    document.getElementById('row-cur-profit').textContent = '+' + fmtRub(currencyProfit);
+
+    const totalCargoRub  = cargoTotal * rateCargo;
+    const totalClientRub = clientTotalUsd * rateYour;
+    const totalProfitRub = totalClientRub - totalCargoRub;
+
+    document.getElementById('row-total-cargo').textContent  = fmtRub(totalCargoRub);
+    document.getElementById('row-total-client').textContent = fmtRub(totalClientRub);
+    document.getElementById('row-total-profit').textContent = '+' + fmtRub(totalProfitRub);
+
+    document.getElementById('s-cargo').textContent  = fmt(cargoTotal);
+    document.getElementById('s-client').textContent = fmt(clientTotalUsd);
+    document.getElementById('s-profit').textContent = fmt(profitUsd);
+    document.getElementById('s-margin').textContent = 'маржа ' + margin.toFixed(1) + '%';
+    document.getElementById('s-currency').textContent = fmtRub(currencyProfit);
+  }
+
+  syncInsRates();
+  calcIns();
+  calcPack();
+  autoCalcM3();
+  calcDensity();
+</script>
+</body>
+</html>
